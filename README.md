@@ -3,5 +3,7 @@
 Frodo Pano Martin
 Ezenwoke Uchechukwu Promise
 Faharetana Rakotomamonjy Andriatsiva
-,Clementine Iradukunda
+Clementine Iradukunda
 Jose Pablo Arizandieta Morales
+Divine Oluyede
+Steve Daprim Amos
