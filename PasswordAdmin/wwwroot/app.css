@@ -58,3 +58,12 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+
+.main-content {
+    padding: 3rem 4rem;
+    min-height: calc(100vh - 140px);
+}
+.home-hero {
+    max-width: 700px;
+}

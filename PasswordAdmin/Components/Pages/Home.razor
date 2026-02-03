@@ -2,6 +2,33 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="home-hero">
+    <h1>Welcome to PasswordAdmin</h1>
 
-Welcome to your new app.
+    <p class="lead">
+        Securely store and manage your passwords in one place.
+    </p>
+
+    <p class="lead">
+        To get started, use the navigation links above to Register or Login.
+    </p>
+
+    <!-- Search Bar -->
+    <div class="search-container mt-4">
+        <input type="text" class="search-input" placeholder="Search for a password..." @bind="searchQuery" />
+        <button class="btn btn-primary search-btn" @onclick="OnSearch">Search</button>
+    </div>
+
+   
+</div>
+
+@code {
+    private string searchQuery = "";
+
+    private void OnSearch()
+    {
+        // For now, just log to console or display in a message
+        Console.WriteLine($"Searching for: {searchQuery}");
+        // Later: call a backend method to perform actual search
+    }
+}
