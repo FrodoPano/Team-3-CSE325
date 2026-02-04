@@ -5,28 +5,23 @@ using PasswordAdmin.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Razor Components
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// DbContext (SQLite)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Identity
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// AuthN/AuthZ (para endpoints + componentes)
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// HTTP pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -35,16 +30,66 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
-app.UseAntiforgery();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapPost("/account/logout", async (
+    HttpContext http,
+    SignInManager<IdentityUser> signInManager) =>
+{
+    await signInManager.SignOutAsync();
+    return Results.Redirect("/");
+});
+
+
+// IMPORTANT: antiforgery AFTER auth
+app.UseAntiforgery();
+
+
+// ✅ Login endpoint (POST normal: aquí sí se setea cookie)
+app.MapPost("/account/login", async (
+    HttpContext http,
+    SignInManager<IdentityUser> signInManager) =>
+{
+    var form = await http.Request.ReadFormAsync();
+    var email = form["email"].ToString();
+    var password = form["password"].ToString();
+    var remember = form["rememberMe"] == "on" || form["rememberMe"] == "true";
+
+    var result = await signInManager.PasswordSignInAsync(email, password, remember, lockoutOnFailure: false);
+
+    if (result.Succeeded)
+        return Results.Redirect("/");
+
+    return Results.Redirect("/login?error=1");
+});
+
+app.MapPost("/account/register", async (
+    HttpContext http,
+    UserManager<IdentityUser> userManager) =>
+{
+    var form = await http.Request.ReadFormAsync();
+    var email = form["email"].ToString();
+    var password = form["password"].ToString();
+    var confirm = form["confirmPassword"].ToString();
+
+    if (password != confirm)
+        return Results.Redirect("/register?error=pwdmatch");
+
+    var user = new IdentityUser { UserName = email, Email = email };
+    var result = await userManager.CreateAsync(user, password);
+
+    if (result.Succeeded)
+        return Results.Redirect("/login");
+
+    return Results.Redirect("/register?error=1");
+});
+
+
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-
-
 
 app.Run();

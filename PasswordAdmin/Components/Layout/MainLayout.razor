@@ -2,22 +2,23 @@
 
 <div class="page">
 
-    <!-- Header -->
-    <header class="app-header">
-        <h2>PasswordAdmin</h2>
-        <nav>
-            <a href="/">Home</a>
-            <a href="/login">Login</a>
-            <a href="/register">Register</a>
-        </nav>
+    <header class="app-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <h2>PasswordAdmin</h2>
+            <nav>
+                <a href="/">Home</a>
+            </nav>
+        </div>
+
+        <div>
+            <AuthStatus />
+        </div>
     </header>
 
-    <!-- Main content -->
     <main class="main-content">
         @Body
     </main>
 
-    <!-- Footer -->
     <footer class="app-footer">
         © @DateTime.Now.Year PasswordAdmin. All rights reserved.
     </footer>

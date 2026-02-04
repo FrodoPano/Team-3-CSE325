@@ -1,94 +1,46 @@
 @page "/register"
 @rendermode InteractiveServer
 
-@using Microsoft.AspNetCore.Identity
-@using System.ComponentModel.DataAnnotations
-@using Microsoft.AspNetCore.Components.Forms
-@inject UserManager<IdentityUser> UserManager
 @inject NavigationManager Nav
 
 <h1>Register</h1>
 <p>Create a new account.</p>
 
-<EditForm Model="@Input" OnValidSubmit="HandleRegister" FormName="register-form">
-    <AntiforgeryToken />
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-
-    <div style="max-width: 420px;">
-        <div style="margin-bottom: 12px;">
-            <label>Email</label><br />
-            <InputText @bind-Value="Input.Email" class="form-control" />
-            <ValidationMessage For="@(() => Input.Email)" />
-        </div>
-
-        <div style="margin-bottom: 12px;">
-            <label>Password</label><br />
-            <InputText @bind-Value="Input.Password" type="password" class="form-control" />
-            <ValidationMessage For="@(() => Input.Password)" />
-        </div>
-
-        <div style="margin-bottom: 12px;">
-            <label>Confirm Password</label><br />
-            <InputText @bind-Value="Input.ConfirmPassword" type="password" class="form-control" />
-            <ValidationMessage For="@(() => Input.ConfirmPassword)" />
-        </div>
-
-        <button type="submit" disabled="@IsBusy">Create account</button>
-    </div>
-</EditForm>
-
-@if (!string.IsNullOrWhiteSpace(Message))
+@if (ErrorMessage is not null)
 {
-    <p style="margin-top: 12px;">@Message</p>
+    <p style="color:#b00020; font-weight:600;">❌ @ErrorMessage</p>
 }
 
+<form method="post" action="/account/register" style="max-width:420px;">
+    <AntiforgeryToken />
+
+    <div style="margin-bottom:12px;">
+        <label>Email</label><br />
+        <input name="email" class="form-control" />
+    </div>
+
+    <div style="margin-bottom:12px;">
+        <label>Password</label><br />
+        <input name="password" type="password" class="form-control" />
+    </div>
+
+    <div style="margin-bottom:12px;">
+        <label>Confirm Password</label><br />
+        <input name="confirmPassword" type="password" class="form-control" />
+    </div>
+
+    <button type="submit">Create account</button>
+</form>
+
 @code {
-    private string? Message;
-    private bool IsBusy;
-
-    private RegisterInputModel Input { get; set; } = new();
-
-    private async Task HandleRegister()
+    private string? ErrorMessage
     {
-        if (IsBusy) return;
-
-        IsBusy = true;
-        Message = null;
-
-        try
+        get
         {
-            var user = new IdentityUser
-            {
-                UserName = Input.Email,
-                Email = Input.Email
-            };
-
-            var result = await UserManager.CreateAsync(user, Input.Password);
-
-            if (result.Succeeded)
-            {
-                Nav.NavigateTo("/login", forceLoad: true);
-                return;
-            }
-
-            Message = "❌ " + string.Join(" | ", result.Errors.Select(e => e.Description));
+            var q = Nav.ToAbsoluteUri(Nav.Uri).Query;
+            if (q.Contains("error=pwdmatch")) return "Passwords do not match.";
+            if (q.Contains("error=1")) return "Could not create the user (email may already exist or password rules).";
+            return null;
         }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    private class RegisterInputModel
-    {
-        [Required, EmailAddress]
-        public string Email { get; set; } = "";
-
-        [Required, MinLength(6)]
-        public string Password { get; set; } = "";
-
-        [Required, Compare(nameof(Password))]
-        public string ConfirmPassword { get; set; } = "";
     }
 }
