@@ -2,33 +2,65 @@
 
 <PageTitle>Home</PageTitle>
 
-<div class="home-hero">
-    <h1>Welcome to PasswordAdmin</h1>
+<!-- ================= HERO SECTION ================= -->
+<div class="hero-container">
+    <div class="hero-content">
 
-    <p class="lead">
-        Securely store and manage your passwords in one place.
-    </p>
+        <!-- LEFT SIDE -->
+        <div class="hero-text">
+            <h1>
+                Manage Your Passwords<br />
+                Safely and Efficiently
+            </h1>
+            <p>
+                Securely store and manage all your passwords in one place.
+                Access your credentials anytime, from any device.
+            </p>
 
-    <p class="lead">
-        To get started, use the navigation links above to Register or Login.
-    </p>
+            <div class="hero-buttons">
+                <a href="/register" class="btn-primary">Get Started</a>
+                <a href="/login" class="btn-outline">View More</a>
+            </div>
+        </div>
 
-    <!-- Search Bar -->
-    <div class="search-container mt-4">
-        <input type="text" class="search-input" placeholder="Search for a password..." @bind="searchQuery" />
-        <button class="btn btn-primary search-btn" @onclick="OnSearch">Search</button>
+        <!-- RIGHT SIDE -->
+        <div class="hero-image">
+            <img src="lib/images/computer-pass.jpg" width="300" height="200"alt="Hero Image" />
+        </div>
+
     </div>
-
-   
 </div>
 
-@code {
-    private string searchQuery = "";
 
-    private void OnSearch()
-    {
-        // For now, just log to console or display in a message
-        Console.WriteLine($"Searching for: {searchQuery}");
-        // Later: call a backend method to perform actual search
-    }
-}
+<div class="container">
+
+    <h2 class="section-title">What You Will Learn</h2>
+
+    <div class="learn-grid">
+
+        <div class="learn-card">
+            <div class="icon-box">🔐</div>
+            <h5>Secure Password Storage</h5>
+            <p>
+                Learn how to store and manage your passwords safely in one place.
+            </p>
+        </div>
+
+        <div class="learn-card">
+            <div class="icon-box">📱</div>
+            <h5>Access Anywhere</h5>
+            <p>
+                Understand how to access your credentials securely, anytime, from any device.
+            </p>
+        </div>
+
+        <div class="learn-card">
+            <div class="icon-box">⚡</div>
+            <h5>Quick Management</h5>
+            <p>
+                Master efficient password management to save time and stay organized.
+            </p>
+        </div>
+
+    </div>
+</div>
