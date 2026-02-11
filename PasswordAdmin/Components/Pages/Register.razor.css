@@ -1,20 +1,25 @@
-.eye-logo {
-  width: fit-content;
-  display: inline;
-}
-
-.eye-logo img {
-  display: inline;
-  width: 20px;
-  height: 20px;
-  margin-left: 1rem;
+form {
+  width: 350px;
 }
 
 label {
   display: block;
 }
 
-form input {
+form input:not([type="checkbox"]) {
   display: inline;
-  width: 60%;
+  width: 100%;
+}
+
+.eye-logo {
+  display: inline;
+  width: fit-content;
+  position: absolute;
+  transform: translateY(5px);
+}
+
+.eye-logo img {
+  width: 20px;
+  height: 20px;
+  margin-left: 1rem;
 }
