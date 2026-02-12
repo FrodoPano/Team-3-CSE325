@@ -1,4 +1,7 @@
 ﻿@page "/"
+@inject UserService userService
+@using PasswordAdmin.Models
+
 
 <PageTitle>Home</PageTitle>
 
@@ -25,7 +28,7 @@
 
         <!-- RIGHT SIDE -->
         <div class="hero-image">
-            <img src="lib/images/computer-pass.jpg" width="300" height="200"alt="Hero Image" />
+            <img src="lib/images/computer-pass.jpg" width="300" height="200" alt="Hero Image" />
         </div>
 
     </div>
@@ -64,3 +67,14 @@
 
     </div>
 </div>
+
+@code {
+    // testing code: delete this later if you want. This is used to grab users and display them on this page
+    public List<User> users = new();
+
+    protected override async Task OnInitializedAsync() // used ai for this line
+    {
+        users = await userService.GetUsersInformation();
+
+    }
+}
