@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 @inject NavigationManager Nav
 
-<h1>Register</h1>
+<h1>Register Page</h1>
 <p>Create a new account.</p>
 
 @if (ErrorMessage is not null)
@@ -12,7 +12,7 @@
     </div>
 }
 
-<form method="post" action="/account/register" style="max-width:420px;">
+<form method="post" action="/account/register" style="max-width:820px;">
     <AntiforgeryToken />
 
     <div style="margin-bottom:16px;">
@@ -51,6 +51,11 @@
 </form>
 
 @code {
+
+    @* Display password class is found in models folder. *@
+    DisplayPassword dp1 = new DisplayPassword();
+    DisplayPassword dp2 = new DisplayPassword();
+
     private string? ErrorMessage
     {
         get
