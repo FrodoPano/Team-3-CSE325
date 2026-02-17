@@ -21,48 +21,58 @@
 else if (user == null)
 {
     <div class="alert alert-warning">
-        <p>User not found.</p>
+        <p>User not found in database.</p>
     </div>
 }
 else
 {
-    <EditForm Model="@user" OnValidSubmit="@SaveSettings">
+    <div class="alert alert-info">
+        Logged in as: <strong>@user.Email</strong>
+    </div>
+
+    <EditForm Model="@user" OnValidSubmit="@SaveSettings" FormName="AccountForm">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
         <div class="form-group mb-3">
-            <label>Email</label>
-            <InputText @bind-Value="user.Email" class="form-control" disabled />
+            <label for="email" class="form-label">Email</label>
+            <InputText id="email" @bind-Value="user.Email" class="form-control" disabled />
+            <small class="text-muted">Email cannot be changed</small>
         </div>
 
         <div class="form-group mb-3">
-            <label>First Name</label>
-            <InputText @bind-Value="user.FirstName" class="form-control" />
+            <label for="firstName" class="form-label">First Name</label>
+            <InputText id="firstName" @bind-Value="user.FirstName" class="form-control" />
+            <ValidationMessage For="@(() => user.FirstName)" />
         </div>
 
         <div class="form-group mb-3">
-            <label>Last Name</label>
-            <InputText @bind-Value="user.LastName" class="form-control" />
+            <label for="lastName" class="form-label">Last Name</label>
+            <InputText id="lastName" @bind-Value="user.LastName" class="form-control" />
+            <ValidationMessage For="@(() => user.LastName)" />
         </div>
 
         <div class="form-group mb-3">
-            <label>Phone Number</label>
-            <InputText @bind-Value="user.PhoneNumber" class="form-control" />
+            <label for="phoneNumber" class="form-label">Phone Number</label>
+            <InputNumber id="phoneNumber" @bind-Value="user.PhoneNumber" class="form-control" />
+            <ValidationMessage For="@(() => user.PhoneNumber)" />
+        </div>
+
+        <h5 class="mt-4">Preferences</h5>
+
+        <div class="form-check mb-3">
+            <InputCheckbox id="emailNotifications" @bind-Value="user.EmailNotifications" class="form-check-input" />
+            <label class="form-check-label" for="emailNotifications">Receive email notifications</label>
         </div>
 
         <div class="form-check mb-3">
-            <InputCheckbox @bind-Value="user.EmailNotifications" />
-            <label>Receive Email Notifications</label>
-        </div>
-
-        <div class="form-check mb-3">
-            <InputCheckbox @bind-Value="user.TwoFactorEnabled" />
-            <label>Enable Two-Factor Auth</label>
+            <InputCheckbox id="twoFactorEnabled" @bind-Value="user.TwoFactorEnabled" class="form-check-input" />
+            <label class="form-check-label" for="twoFactorEnabled">Enable two-factor authentication</label>
         </div>
 
         <div class="form-group mb-3">
-            <label>Theme</label>
-            <InputSelect @bind-Value="user.Theme" class="form-control">
+            <label for="theme" class="form-label">Theme Preference</label>
+            <InputSelect id="theme" @bind-Value="user.Theme" class="form-control">
                 <option value="Light">Light</option>
                 <option value="Dark">Dark</option>
                 <option value="System">System Default</option>
@@ -70,8 +80,8 @@ else
         </div>
 
         <div class="form-group mb-3">
-            <label>Language</label>
-            <InputSelect @bind-Value="user.LanguagePreferance" class="form-control">
+            <label for="language" class="form-label">Language</label>
+            <InputSelect id="language" @bind-Value="user.LanguagePreferance" class="form-control">
                 <option value="en">English</option>
                 <option value="es">Español</option>
                 <option value="fr">Français</option>
@@ -80,12 +90,16 @@ else
 
         @if (!string.IsNullOrEmpty(message))
         {
-            <div class="alert alert-@messageType">@message</div>
+            <div class="alert alert-@messageType mt-3">
+                @message
+            </div>
         }
 
-        <button type="submit" class="btn btn-primary">Save</button>
-        <button type="button" class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
-        <button type="button" class="btn btn-danger ms-2" @onclick="Logout">Logout</button>
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="button" class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+            <button type="button" class="btn btn-danger ms-2" @onclick="Logout">Logout</button>
+        </div>
     </EditForm>
 }
 
@@ -98,22 +112,45 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadUser();
+        await LoadUserData();
     }
 
-    private async Task LoadUser()
+    private async Task LoadUserData()
     {
         isLoading = true;
+        
         try
         {
+            // Get the authenticated user from Identity
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var identityUser = await UserManager.GetUserAsync(authState.User);
-
-            if (identityUser != null)
+            var claimsPrincipal = authState.User;
+            
+            if (claimsPrincipal.Identity?.IsAuthenticated == true)
             {
-                user = await userService.GetUserByEmail(identityUser.Email ?? "");
-                if (user != null)
-                    originalUser = user.Clone();
+                var identityUser = await UserManager.GetUserAsync(claimsPrincipal);
+                
+                if (identityUser != null)
+                {
+                    // Find the user in Supabase by email
+                    user = await userService.GetUserByEmail(identityUser.Email ?? "");
+                    
+                    if (user != null)
+                    {
+                        // Store original values for cancel functionality
+                        originalUser = new User
+                        {
+                            Id = user.Id,
+                            Email = user.Email,
+                            FirstName = user.FirstName,
+                            LastName = user.LastName,
+                            PhoneNumber = user.PhoneNumber,
+                            EmailNotifications = user.EmailNotifications,
+                            TwoFactorEnabled = user.TwoFactorEnabled,
+                            Theme = user.Theme,
+                            LanguagePreferance = user.LanguagePreferance
+                        };
+                    }
+                }
             }
         }
         catch (Exception ex)
@@ -131,26 +168,54 @@ else
     {
         if (user == null) return;
 
-        var (ok, msg, updatedUser) = await userService.Update(user);
-
-        if (ok && updatedUser != null)
+        try
         {
-            message = "Settings saved successfully!";
-            messageType = "success";
-            user.CopyFrom(updatedUser);
-            originalUser.CopyFrom(updatedUser);
+            var result = await userService.Update(user);
+            
+            if (result.ok)
+            {
+                message = "Settings saved successfully!";
+                messageType = "success";
+                
+                // Update original values
+                originalUser = new User
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    PhoneNumber = user.PhoneNumber,
+                    EmailNotifications = user.EmailNotifications,
+                    TwoFactorEnabled = user.TwoFactorEnabled,
+                    Theme = user.Theme,
+                    LanguagePreferance = user.LanguagePreferance
+                };
+            }
+            else
+            {
+                message = $"Error: {result.message}";
+                messageType = "danger";
+            }
         }
-        else
+        catch (Exception ex)
         {
-            message = $"Error: {msg}";
+            message = $"Error saving settings: {ex.Message}";
             messageType = "danger";
         }
     }
 
     private void Cancel()
     {
-        if (user != null)
-            user.CopyFrom(originalUser);
+        if (user != null && originalUser != null)
+        {
+            user.FirstName = originalUser.FirstName;
+            user.LastName = originalUser.LastName;
+            user.PhoneNumber = originalUser.PhoneNumber;
+            user.EmailNotifications = originalUser.EmailNotifications;
+            user.TwoFactorEnabled = originalUser.TwoFactorEnabled;
+            user.Theme = originalUser.Theme;
+            user.LanguagePreferance = originalUser.LanguagePreferance;
+        }
         message = string.Empty;
     }
 
@@ -160,3 +225,31 @@ else
         Navigation.NavigateTo("/");
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
