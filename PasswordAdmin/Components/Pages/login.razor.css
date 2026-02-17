@@ -1,0 +1,14 @@
+form {
+  width: 350px;
+}
+
+label {
+  display: block;
+}
+
+form input:not([type="checkbox"]) {
+  display: inline;
+  width: 100%;
+}
+
+
