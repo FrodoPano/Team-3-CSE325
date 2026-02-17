@@ -2,4 +2,5 @@ PasswordAdmin/bin
 PasswordAdmin/obj
 /PasswordAdmin.sln
 /.vscode
-PasswordAdmin/.env
+.env
+
