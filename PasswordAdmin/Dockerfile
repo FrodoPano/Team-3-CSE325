@@ -18,7 +18,7 @@ WORKDIR /app
 COPY --from=build /app/publish ./
 
 # Copy SQLite database file into container
-COPY app.db /app/app.db
+COPY ../app.db /app/app.db
 
 # Set port for Render
 ENV ASPNETCORE_URLS=http://+:8080
