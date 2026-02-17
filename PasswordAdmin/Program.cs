@@ -20,8 +20,9 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddCascadingAuthenticationState();
 
 // SQLite database context for Identity
+var dbPath = Path.Combine(AppContext.BaseDirectory, "app.db");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite($"Data Source={dbPath}"));
 
 // Identity configuration
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
