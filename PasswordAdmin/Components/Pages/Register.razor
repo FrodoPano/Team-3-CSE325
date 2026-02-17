@@ -35,16 +35,26 @@
 
     <div style="margin-bottom:16px;">
         <label style="display:block; margin-bottom:4px; font-weight:600;">Password</label>
-        <InputText name="password" type="password" @bind-Value="registerModel.Password" class="form-control" required />
+        <div class="input-field">
+            <InputText name="password" type="@dp1.GetPwdType()" @bind-Value="registerModel.Password"
+                       class="form-control"                   required />
+            <i class="eye-logo" @onclick="dp1.ShowPassword">
+                <img src="@dp1.GetEyeSrc()" alt="@dp1.GetEyeAlt()">
+            </i>
+        </div>
         <small style="color:#666; display:block; margin-top:4px;">
             Password must be at least 6 characters, contain 1 uppercase and 1 number
         </small>
     </div>
-
     <div style="margin-bottom:20px;">
         <label style="display:block; margin-bottom:4px; font-weight:600;">Confirm Password</label>
-        <InputText name="confirmPassword" type="password" @bind-Value="registerModel.ConfirmPassword"
-                   class="form-control" required />
+        <div class="input-field">
+            <InputText name="confirmPassword" type="@dp2.GetPwdType()" @bind-Value="registerModel.ConfirmPassword"
+                       class="form-control" required />
+            <i class="eye-logo" @onclick="dp2.ShowPassword">
+                <img src="@dp2.GetEyeSrc()" alt="@dp2.GetEyeAlt()">
+            </i>
+        </div>
     </div>
 
     <button type="submit" class="btn btn-primary">Create Account</button>

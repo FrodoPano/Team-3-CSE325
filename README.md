@@ -7,6 +7,8 @@ Clementine Iradukunda
 Jose Pablo Arizandieta Morales
 Divine Oluyede
 Steve Daprim Amos
+Racheal Katono
+Manuel Mario Zamalloa Llantoy 
 
 # Github link
 https://github.com/FrodoPano/Team-3-CSE325
