@@ -22,15 +22,15 @@ namespace PasswordAdmin.Models
             }
         }
 
-        public string getType()
+        public string GetPwdType()
         {
             return type;
         }
-        public string getEyeSrc()
+        public string GetEyeSrc()
         {
             return eye_src;
         }
-        public string getEyeAlt()
+        public string GetEyeAlt()
         {
             return eye_alt;
         }

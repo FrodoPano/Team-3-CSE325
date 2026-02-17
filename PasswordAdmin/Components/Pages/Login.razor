@@ -32,7 +32,12 @@
 
     <div style="margin-bottom:16px;">
         <label style="display:block; margin-bottom:4px; font-weight:600;">Password</label>
-        <input name="password" type="password" class="form-control" placeholder="Enter password" required />
+        <div class="input-field">
+            <input name="password" type="@dp1.GetPwdType()" class="form-control" placeholder="Enter password" required />
+            <i class="eye-logo" @onclick="dp1.ShowPassword">
+                <img src="@dp1.GetEyeSrc()" alt="@dp1.GetEyeAlt()">
+            </i>
+        </div>
     </div>
 
     <div style="margin-bottom:20px;">
@@ -50,6 +55,8 @@
 </form>
 
 @code {
+
+    DisplayPassword dp1 = new();
     private string? ErrorMessage
     {
         get
