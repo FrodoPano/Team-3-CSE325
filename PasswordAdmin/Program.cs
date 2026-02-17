@@ -57,6 +57,7 @@ await client.InitializeAsync();
 
 builder.Services.AddSingleton(client);
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<PasswordAdmin.Services.PasswordVaultService>();
 
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();

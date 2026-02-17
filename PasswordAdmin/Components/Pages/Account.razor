@@ -30,7 +30,7 @@ else
         Logged in as: <strong>@user.Email</strong>
     </div>
 
-    <EditForm Model="@user" OnValidSubmit="@SaveSettings">
+    <EditForm Model="@user" OnValidSubmit="@SaveSettings" FormName="AccountForm">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
