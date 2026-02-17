@@ -1,0 +1,357 @@
+@page "/vault"
+@using PasswordAdmin.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
+@rendermode InteractiveServer
+@attribute [Authorize]
+@inject PasswordVaultService VaultService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JS
+
+<PageTitle>Password Vault</PageTitle>
+
+<div class="container py-4">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-0">🔐 Password Vault</h3>
+            <small class="text-muted">Securely manage your credentials</small>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- TABLE SECTION -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-white">
+                    <input class="form-control"
+                           placeholder="Search title or description..."
+                           @bind="search"
+                           @bind:event="oninput" />
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Title</th>
+                                <th>Password</th>
+                                <th>Description</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!FilteredItems.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        No saved passwords yet.
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var it in FilteredItems)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@it.Title</td>
+
+                                        <td style="max-width:220px;">
+                                            <div class="input-group input-group-sm">
+                                                <input type="@(it.ShowPlain ? "text" : "password")"
+                                                       value="@it.Password"
+                                                       class="form-control"
+                                                       readonly />
+
+                                                <button class="btn btn-outline-secondary"
+                                                        type="button"
+                                                        @onclick="() => ToggleShow(it)">
+                                                    @(it.ShowPlain ? "Hide" : "Show")
+                                                </button>
+
+                                                <button class="btn btn-outline-success"
+                                                        type="button"
+                                                        @onclick="() => CopyToClipboard(it.Password)">
+                                                    📋
+                                                </button>
+                                            </div>
+                                        </td>
+
+                                        <td class="text-muted small">
+                                            @it.Description
+                                        </td>
+
+                                        <td class="text-end">
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary"
+                                                        type="button"
+                                                        @onclick="() => StartEdit(it)">
+                                                    Edit
+                                                </button>
+
+                                                <button class="btn btn-outline-danger"
+                                                        type="button"
+                                                        @onclick="() => ConfirmDelete(it)">
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM SECTION -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body">
+
+                    <h5 class="fw-bold mb-3">
+                        @(isEditing ? "Edit Password" : "Create Password")
+                    </h5>
+
+                    @if (!string.IsNullOrWhiteSpace(statusMessage))
+                    {
+                        <div class="alert alert-dismissible fade show mb-3" style="border-color: @(statusType == "success" ? "green" : statusType == "danger" ? "red" : "orange"); background-color: @(statusType == "success" ? "#d4edda" : statusType == "danger" ? "#f8d7da" : "#fff3cd");">
+                            @statusMessage
+                            <button type="button"
+                                    class="btn-close"
+                                    @onclick="() => statusMessage = string.Empty">
+                            </button>
+                        </div>
+                    }
+
+                    <EditForm Model="model" OnSubmit="SaveItem" FormName="VaultForm">
+                        <!-- Removed DataAnnotationsValidator to allow submission with validation in handler -->
+
+                        <!-- TITLE -->
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <InputText class="form-control"
+                                       @bind-Value="model.Title" />
+                        </div>
+
+                        <!-- PASSWORD -->
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+
+                            <div class="input-group">
+                                <InputText class="form-control"
+                                           type="@passwordFieldType"
+                                           @bind-Value="model.Password" />
+
+                                <button class="btn btn-outline-secondary"
+                                        type="button"
+                                        @onclick="TogglePasswordVisibility">
+                                    @(passwordFieldType == "password" ? "Show" : "Hide")
+                                </button>
+
+                                <button class="btn btn-outline-success"
+                                        type="button"
+                                        @onclick="GeneratePassword">
+                                    ⚡
+                                </button>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(model.Password))
+                            {
+                                <div class="mt-2">
+                                    <div class="progress" style="height:6px;">
+                                        <div class="progress-bar @StrengthColor"
+                                             style="width:@StrengthPercent">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">@StrengthText</small>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- DESCRIPTION -->
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <InputTextArea class="form-control"
+                                           rows="3"
+                                           @bind-Value="model.Description" />
+                        </div>
+
+                        <!-- BUTTONS -->
+                        <div class="d-flex">
+                            <button class="btn btn-success me-2" type="button" @onclick="SaveItem">
+                                @(isEditing ? "Update" : "Create")
+                            </button>
+
+                            <button class="btn btn-outline-secondary"
+                                    type="button"
+                                    @onclick="Cancel">
+                                Clear
+                            </button>
+                        </div>
+
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@code {
+
+    private List<PasswordVaultService.VaultEntry> items = new();
+    private PasswordVaultService.VaultEntry model = new();
+    private bool isEditing = false;
+    private string ownerEmail = string.Empty;
+    private string passwordFieldType = "password";
+    private string search = string.Empty;
+    private string statusMessage = string.Empty;
+    private string statusType = "info";
+
+    private IEnumerable<PasswordVaultService.VaultEntry> FilteredItems =>
+        items.Where(i => string.IsNullOrWhiteSpace(search)
+            || (i.Title?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (i.Description?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            ownerEmail = user.FindFirst("email")?.Value
+                         ?? user.Identity?.Name
+                         ?? string.Empty;
+        }
+
+        await LoadItems();
+    }
+
+    private async Task LoadItems()
+    {
+        items = await VaultService.GetItems(ownerEmail);
+    }
+
+    private void NewItem()
+    {
+        model = new PasswordVaultService.VaultEntry();
+        isEditing = false;
+        passwordFieldType = "password";
+    }
+
+    private void StartEdit(PasswordVaultService.VaultEntry it)
+    {
+        model = it.Clone();
+        isEditing = true;
+        passwordFieldType = "password";
+    }
+
+    private async Task SaveItem()
+    {
+        if (string.IsNullOrWhiteSpace(model.Title))
+        {
+            statusMessage = "Title is required.";
+            statusType = "warning";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Password))
+        {
+            statusMessage = "Password is required.";
+            statusType = "warning";
+            return;
+        }
+
+        if (isEditing)
+        {
+            await VaultService.UpdateItem(ownerEmail, model);
+            statusMessage = "Password updated successfully!";
+        }
+        else
+        {
+            await VaultService.AddItem(ownerEmail, model);
+            statusMessage = "Password created successfully!";
+        }
+
+        statusType = "success";
+
+        await LoadItems();
+        model = new PasswordVaultService.VaultEntry();
+        isEditing = false;
+        passwordFieldType = "password";
+    }
+
+    private void ToggleShow(PasswordVaultService.VaultEntry it)
+        => it.ShowPlain = !it.ShowPlain;
+
+    private void TogglePasswordVisibility()
+        => passwordFieldType = passwordFieldType == "password" ? "text" : "password";
+
+    private async Task CopyToClipboard(string text)
+        => await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+
+    private async Task ConfirmDelete(PasswordVaultService.VaultEntry it)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", $"Delete '{it.Title}'?");
+        if (ok)
+        {
+            await VaultService.DeleteItem(ownerEmail, it.Id);
+            await LoadItems();
+        }
+    }
+
+    private void Cancel()
+    {
+        model = new PasswordVaultService.VaultEntry();
+        isEditing = false;
+        passwordFieldType = "password";
+    }
+
+    // PASSWORD STRENGTH
+
+    private int PasswordScore =>
+        (model.Password?.Length ?? 0) switch
+        {
+            >= 12 => 3,
+            >= 8 => 2,
+            >= 5 => 1,
+            _ => 0
+        };
+
+    private string StrengthPercent => PasswordScore switch
+    {
+        3 => "100%",
+        2 => "66%",
+        1 => "33%",
+        _ => "10%"
+    };
+
+    private string StrengthColor => PasswordScore switch
+    {
+        3 => "bg-success",
+        2 => "bg-warning",
+        1 => "bg-danger",
+        _ => "bg-danger"
+    };
+
+    private string StrengthText => PasswordScore switch
+    {
+        3 => "Strong password",
+        2 => "Medium strength",
+        1 => "Weak password",
+        _ => "Very weak"
+    };
+
+    private void GeneratePassword()
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+        var random = new Random();
+        model.Password = new string(Enumerable.Repeat(chars, 16)
+            .Select(s => s[random.Next(s.Length)]).ToArray());
+    }
+}
