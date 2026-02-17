@@ -4,9 +4,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy all files and restore dependencies
 COPY . ./
-RUN dotnet publish -c Release -o /app/publish
+
+RUN dotnet publish PasswordAdmin/PasswordAdmin.csproj -c Release -o /app/publish
 
 # ------------------------
 # Runtime Stage
@@ -14,15 +14,14 @@ RUN dotnet publish -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 
-# Copy published files
 COPY --from=build /app/publish ./
 
-# Copy SQLite database file into container
-COPY ../app.db /app/app.db
+# Copy SQLite database from PasswordAdmin folder
+COPY PasswordAdmin/app.db /app/app.db
 
-# Set port for Render
 ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
 EXPOSE 8080
 
-# Start the app
 ENTRYPOINT ["dotnet", "PasswordAdmin.dll"]
