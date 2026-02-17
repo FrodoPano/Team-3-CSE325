@@ -10,8 +10,8 @@ public class User : BaseModel
     public int Id { get; set; }
     
     [Column("created_at")]
-    public string CreatedAt { get; set; } = string.Empty;
-    
+    public DateTime CreatedAt { get; set; } 
+
     [Column("first_name")]
     public string? FirstName { get; set; }
     

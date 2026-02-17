@@ -2,7 +2,8 @@ using Supabase;
 using PasswordAdmin.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace PasswordAdmin.Services; 
+namespace PasswordAdmin.Services;
+
 public class UserService
 {
     private readonly Client _client;
@@ -12,6 +13,8 @@ public class UserService
     {
         _client = client;
     }
+
+
 
     // Get all users
     public async Task<List<User>> GetUsersInformation()
@@ -61,19 +64,19 @@ public class UserService
         if (existingUser != null)
             return (false, "That email is already registered.", null);
 
-        var user = new User 
-        { 
+        var user = new User
+        {
             Email = email,
             FirstName = firstName,
             LastName = lastName,
-            CreatedAt = DateTime.UtcNow.ToString("o"),
+            CreatedAt = DateTime.UtcNow,
             EmailNotifications = true,
             Theme = "Light",
             LanguagePreferance = "en",
             TwoFactorEnabled = false,
-            PhoneNumber = null
+            PhoneNumber = null,
         };
-        
+
         user.PasswordHash = _hasher.HashPassword(user, password);
 
         try
