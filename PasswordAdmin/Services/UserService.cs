@@ -14,26 +14,17 @@ public class UserService
         _client = client;
     }
 
-
-
-    // Get all users
+    // ✅ Get all users
     public async Task<List<User>> GetUsersInformation()
-    {
-        var result = await _client.From<User>().Get();
-        return result.Models;
-    }
-
-    // Get specific user by ID
-    public async Task<User?> GetSpecificUser(int id)
     {
         try
         {
-            var result = await _client.From<User>().Where(u => u.Id == id).Get();
-            return result.Models.FirstOrDefault();
+            var result = await _client.From<User>().Get();
+            return result.Models;
         }
         catch
         {
-            return null;
+            return new List<User>();
         }
     }
 
@@ -42,7 +33,7 @@ public class UserService
     {
         try
         {
-            var result = await _client.From<User>().Where(u => u.Email == email).Get();
+            var result = await _client.From<User>().Where(u => u.Email == email.Trim().ToLowerInvariant()).Get();
             return result.Models.FirstOrDefault();
         }
         catch
@@ -55,14 +46,13 @@ public class UserService
     public async Task<(bool ok, string message, User? user)> Register(string email, string password, string firstName, string lastName)
     {
         email = (email ?? "").Trim().ToLowerInvariant();
-
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             return (false, "Email and password are required.", null);
 
         // Check if user already exists
         var existingUser = await GetUserByEmail(email);
         if (existingUser != null)
-            return (false, "That email is already registered.", null);
+            return (false, "Email is already registered.", null);
 
         var user = new User
         {
@@ -73,8 +63,7 @@ public class UserService
             EmailNotifications = true,
             Theme = "Light",
             LanguagePreferance = "en",
-            TwoFactorEnabled = false,
-            PhoneNumber = null,
+            TwoFactorEnabled = false
         };
 
         user.PasswordHash = _hasher.HashPassword(user, password);
@@ -83,9 +72,8 @@ public class UserService
         {
             var result = await _client.From<User>().Insert(user);
             if (result.Models.Count > 0)
-            {
                 return (true, "Account created successfully.", result.Models.First());
-            }
+
             return (false, "Failed to create account.", null);
         }
         catch (Exception ex)
@@ -94,11 +82,10 @@ public class UserService
         }
     }
 
-    // Login user with Supabase
+    // Login user
     public async Task<(bool ok, string message, User? user)> Login(string email, string password)
     {
         email = (email ?? "").Trim().ToLowerInvariant();
-
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             return (false, "Email and password are required.", null);
 
@@ -113,21 +100,24 @@ public class UserService
         return (true, "Login successful.", user);
     }
 
-    // Update user
+    // Update user in Supabase
     public async Task<(bool ok, string message, User? user)> Update(User updatedUser)
     {
         try
         {
+            if (updatedUser.Id == 0)
+                return (false, "User ID missing.", null);
+
             var result = await _client.From<User>().Where(u => u.Id == updatedUser.Id).Update(updatedUser);
+
             if (result.Models.Count > 0)
-            {
                 return (true, "User updated successfully.", result.Models.First());
-            }
-            return (false, "Failed to update user.", null);
+
+            return (false, "No records updated.", null);
         }
         catch (Exception ex)
         {
-            return (false, $"Error: {ex.Message}", null);
+            return (false, $"Error updating user: {ex.Message}", null);
         }
     }
 }
