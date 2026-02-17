@@ -1,37 +1,72 @@
 @page "/login"
 @rendermode InteractiveServer
-
+@using Microsoft.AspNetCore.Identity
 @inject NavigationManager Nav
+@inject SignInManager<IdentityUser> SignInManager
 
 <h1>Login</h1>
 <p>Log into your account.</p>
 
-@if (HasError)
+@if (ErrorMessage is not null)
 {
-    <p style="color: #b00020; font-weight: 600;">❌ Invalid login attempt.</p>
+    <div style="color:#b00020; font-weight:600; padding: 12px; background-color: #ffebee; border-radius: 4px; margin-bottom: 16px; max-width:420px;">
+        ❌ @ErrorMessage
+    </div>
 }
 
+@if (SuccessMessage is not null)
+{
+    <div style="color:#2e7d32; font-weight:600; padding: 12px; background-color: #e8f5e9; border-radius: 4px; margin-bottom: 16px; max-width:420px;">
+        ✅ @SuccessMessage
+    </div>
+}
+
+<!-- Login Form -->
 <form method="post" action="/account/login" style="max-width:420px;">
     <AntiforgeryToken />
 
-    <div style="margin-bottom:12px;">
-        <label>Email</label><br />
-        <input name="email" class="form-control" />
+    <div style="margin-bottom:16px;">
+        <label style="display:block; margin-bottom:4px; font-weight:600;">Email</label>
+        <input name="email" type="email" class="form-control" placeholder="your@email.com" required />
     </div>
 
-    <div style="margin-bottom:12px;">
-        <label>Password</label><br />
-        <input name="password" type="password" class="form-control" />
+    <div style="margin-bottom:16px;">
+        <label style="display:block; margin-bottom:4px; font-weight:600;">Password</label>
+        <input name="password" type="password" class="form-control" placeholder="Enter password" required />
     </div>
 
-    <div style="margin-bottom:12px;">
-        <input name="rememberMe" type="checkbox" />
-        <label style="margin-left:6px;">Remember me</label>
+    <div style="margin-bottom:20px;">
+        <input name="rememberMe" type="checkbox" id="rememberMe" />
+        <label style="margin-left:6px;" for="rememberMe">Remember me</label>
     </div>
 
-    <button type="submit">Login</button>
+    <button type="submit" style="background-color:#007bff; color:white; border:none; padding:10px 20px; border-radius:4px; cursor:pointer; font-size:16px;">
+        Login
+    </button>
+    
+    <p style="margin-top:16px;">
+        Don't have an account? <a href="/register">Register here</a>
+    </p>
 </form>
 
 @code {
-    private bool HasError => Nav.ToAbsoluteUri(Nav.Uri).Query.Contains("error=1");
+    private string? ErrorMessage
+    {
+        get
+        {
+            var q = Nav.ToAbsoluteUri(Nav.Uri).Query;
+            if (q.Contains("error=1")) return "Invalid email or password.";
+            return null;
+        }
+    }
+    
+    private string? SuccessMessage
+    {
+        get
+        {
+            var q = Nav.ToAbsoluteUri(Nav.Uri).Query;
+            if (q.Contains("registered=true")) return "Account created successfully! Please login.";
+            return null;
+        }
+    }
 }

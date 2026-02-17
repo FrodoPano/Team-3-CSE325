@@ -1,151 +1,227 @@
-<!--  page "/account" -->
-<!--  attribute [Authorize] -->
 @page "/account"
-
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using PasswordAdmin.Models
+@inject UserService userService
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
 
 <PageTitle>Account Settings</PageTitle>
 
 <h3>Account Settings</h3>
 
-<EditForm Model="@UserModel" OnValidSubmit="@SaveSettings">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-
-    <div class="form-group mb-3">
-        <label for="email">Email</label>
-        <InputText id="email" @bind-Value="UserModel.Email" class="form-control" disabled />
-        <small class="text-muted">Email cannot be changed</small>
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (user == null)
+{
+    <div class="alert alert-warning">
+        <p>User not found in database.</p>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        Logged in as: <strong>@user.Email</strong>
     </div>
 
-    <div class="form-group mb-3">
-        <label for="displayName">Display Name</label>
-        <InputText id="displayName" @bind-Value="UserModel.DisplayName" class="form-control" />
-        <ValidationMessage For="@(() => UserModel.DisplayName)" />
-    </div>
+    <EditForm Model="@user" OnValidSubmit="@SaveSettings">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-    <div class="form-group mb-3">
-        <label for="phoneNumber">Phone Number</label>
-        <InputText id="phoneNumber" @bind-Value="UserModel.PhoneNumber" class="form-control" />
-        <ValidationMessage For="@(() => UserModel.PhoneNumber)" />
-    </div>
+        <div class="form-group mb-3">
+            <label for="email" class="form-label">Email</label>
+            <InputText id="email" @bind-Value="user.Email" class="form-control" disabled />
+            <small class="text-muted">Email cannot be changed</small>
+        </div>
 
-    <h5 class="mt-4">Preferences</h5>
-    
-    <div class="form-check mb-3">
-        <InputCheckbox id="emailNotifications" @bind-Value="UserModel.ReceiveEmailNotifications" class="form-check-input" />
-        <label class="form-check-label" for="emailNotifications">Receive email notifications</label>
-    </div>
+        <div class="form-group mb-3">
+            <label for="firstName" class="form-label">First Name</label>
+            <InputText id="firstName" @bind-Value="user.FirstName" class="form-control" />
+            <ValidationMessage For="@(() => user.FirstName)" />
+        </div>
 
-    <div class="form-check mb-3">
-        <InputCheckbox id="twoFactorEnabled" @bind-Value="UserModel.TwoFactorEnabled" class="form-check-input" />
-        <label class="form-check-label" for="twoFactorEnabled">Enable two-factor authentication</label>
-    </div>
+        <div class="form-group mb-3">
+            <label for="lastName" class="form-label">Last Name</label>
+            <InputText id="lastName" @bind-Value="user.LastName" class="form-control" />
+            <ValidationMessage For="@(() => user.LastName)" />
+        </div>
 
-    <div class="form-group mb-3">
-        <label for="themePreference">Theme Preference</label>
-        <InputSelect id="themePreference" @bind-Value="UserModel.ThemePreference" class="form-control">
-            <option value="Light">Light</option>
-            <option value="Dark">Dark</option>
-            <option value="System">System Default</option>
-        </InputSelect>
-    </div>
+        <div class="form-group mb-3">
+            <label for="phoneNumber" class="form-label">Phone Number</label>
+            <InputNumber id="phoneNumber" @bind-Value="user.PhoneNumber" class="form-control" />
+            <ValidationMessage For="@(() => user.PhoneNumber)" />
+        </div>
 
-    <div class="form-group mb-3">
-        <label for="languagePreference">Language</label>
-        <InputSelect id="languagePreference" @bind-Value="UserModel.LanguagePreference" class="form-control">
-            <option value="en">English</option>
-            <option value="es">Español</option>
-            <option value="fr">Français</option>
-            <!-- Add more languages as needed -->
-        </InputSelect>
-    </div>
+        <h5 class="mt-4">Preferences</h5>
 
-    <div class="mt-4">
-        <button type="submit" class="btn btn-primary">Save Changes</button>
-        <button type="button" class="btn btn-secondary ms-2" @onclick="@Cancel">Cancel</button>
-    </div>
-</EditForm>
+        <div class="form-check mb-3">
+            <InputCheckbox id="emailNotifications" @bind-Value="user.EmailNotifications" class="form-check-input" />
+            <label class="form-check-label" for="emailNotifications">Receive email notifications</label>
+        </div>
+
+        <div class="form-check mb-3">
+            <InputCheckbox id="twoFactorEnabled" @bind-Value="user.TwoFactorEnabled" class="form-check-input" />
+            <label class="form-check-label" for="twoFactorEnabled">Enable two-factor authentication</label>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="theme" class="form-label">Theme Preference</label>
+            <InputSelect id="theme" @bind-Value="user.Theme" class="form-control">
+                <option value="Light">Light</option>
+                <option value="Dark">Dark</option>
+                <option value="System">System Default</option>
+            </InputSelect>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="language" class="form-label">Language</label>
+            <InputSelect id="language" @bind-Value="user.LanguagePreferance" class="form-control">
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+            </InputSelect>
+        </div>
+
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="alert alert-@messageType mt-3">
+                @message
+            </div>
+        }
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="button" class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+            <button type="button" class="btn btn-danger ms-2" @onclick="Logout">Logout</button>
+        </div>
+    </EditForm>
+}
 
 @code {
-    private UserProfile UserModel = new UserProfile();
-    private UserProfile OriginalModel = new UserProfile();
-    
+    private User? user;
+    private User originalUser = new();
+    private bool isLoading = true;
+    private string message = string.Empty;
+    private string messageType = "info";
+
     protected override async Task OnInitializedAsync()
     {
-        // Load user data from your authentication/API
         await LoadUserData();
     }
-    
+
     private async Task LoadUserData()
     {
-        // TODO: Replace with your actual data loading logic
-        // Example: UserModel = await Http.GetFromJsonAsync<UserProfile>("api/account/profile");
+        isLoading = true;
         
-        // Mock data for demonstration
-        UserModel = new UserProfile
+        try
         {
-            Email = "user@example.com",
-            DisplayName = "John Doe",
-            PhoneNumber = "+1234567890",
-            ReceiveEmailNotifications = true,
-            TwoFactorEnabled = false,
-            ThemePreference = "Light",
-            LanguagePreference = "en"
-        };
-        
-        // Store original for cancel functionality
-        OriginalModel = new UserProfile
+            // Get the authenticated user from Identity
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var claimsPrincipal = authState.User;
+            
+            if (claimsPrincipal.Identity?.IsAuthenticated == true)
+            {
+                var identityUser = await UserManager.GetUserAsync(claimsPrincipal);
+                
+                if (identityUser != null)
+                {
+                    // Find the user in Supabase by email
+                    user = await userService.GetUserByEmail(identityUser.Email ?? "");
+                    
+                    if (user != null)
+                    {
+                        // Store original values for cancel functionality
+                        originalUser = new User
+                        {
+                            Id = user.Id,
+                            Email = user.Email,
+                            FirstName = user.FirstName,
+                            LastName = user.LastName,
+                            PhoneNumber = user.PhoneNumber,
+                            EmailNotifications = user.EmailNotifications,
+                            TwoFactorEnabled = user.TwoFactorEnabled,
+                            Theme = user.Theme,
+                            LanguagePreferance = user.LanguagePreferance
+                        };
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
         {
-            Email = UserModel.Email,
-            DisplayName = UserModel.DisplayName,
-            PhoneNumber = UserModel.PhoneNumber,
-            ReceiveEmailNotifications = UserModel.ReceiveEmailNotifications,
-            TwoFactorEnabled = UserModel.TwoFactorEnabled,
-            ThemePreference = UserModel.ThemePreference,
-            LanguagePreference = UserModel.LanguagePreference
-        };
+            message = $"Error loading user: {ex.Message}";
+            messageType = "danger";
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
-    
+
     private async Task SaveSettings()
     {
-        // TODO: Replace with your actual save logic
-        // Example: await Http.PutAsJsonAsync("api/account/profile", UserModel);
-        
-        Console.WriteLine("Saving user settings...");
-        // Show success message
+        if (user == null) return;
+
+        try
+        {
+            var result = await userService.Update(user);
+            
+            if (result.ok)
+            {
+                message = "Settings saved successfully!";
+                messageType = "success";
+                
+                // Update original values
+                originalUser = new User
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    PhoneNumber = user.PhoneNumber,
+                    EmailNotifications = user.EmailNotifications,
+                    TwoFactorEnabled = user.TwoFactorEnabled,
+                    Theme = user.Theme,
+                    LanguagePreferance = user.LanguagePreferance
+                };
+            }
+            else
+            {
+                message = $"Error: {result.message}";
+                messageType = "danger";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Error saving settings: {ex.Message}";
+            messageType = "danger";
+        }
     }
-    
+
     private void Cancel()
     {
-        // Restore original values
-        UserModel = new UserProfile
+        if (user != null && originalUser != null)
         {
-            Email = OriginalModel.Email,
-            DisplayName = OriginalModel.DisplayName,
-            PhoneNumber = OriginalModel.PhoneNumber,
-            ReceiveEmailNotifications = OriginalModel.ReceiveEmailNotifications,
-            TwoFactorEnabled = OriginalModel.TwoFactorEnabled,
-            ThemePreference = OriginalModel.ThemePreference,
-            LanguagePreference = OriginalModel.LanguagePreference
-        };
+            user.FirstName = originalUser.FirstName;
+            user.LastName = originalUser.LastName;
+            user.PhoneNumber = originalUser.PhoneNumber;
+            user.EmailNotifications = originalUser.EmailNotifications;
+            user.TwoFactorEnabled = originalUser.TwoFactorEnabled;
+            user.Theme = originalUser.Theme;
+            user.LanguagePreferance = originalUser.LanguagePreferance;
+        }
+        message = string.Empty;
     }
-    
-    public class UserProfile
+
+    private async Task Logout()
     {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = string.Empty;
-        
-        [Required]
-        [StringLength(50, MinimumLength = 2)]
-        public string DisplayName { get; set; } = string.Empty;
-        
-        [Phone]
-        public string? PhoneNumber { get; set; }
-        
-        public bool ReceiveEmailNotifications { get; set; }
-        public bool TwoFactorEnabled { get; set; }
-        public string ThemePreference { get; set; } = "Light";
-        public string LanguagePreference { get; set; } = "en";
+        await SignInManager.SignOutAsync();
+        Navigation.NavigateTo("/");
     }
 }
