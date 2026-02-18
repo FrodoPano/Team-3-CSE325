@@ -20,14 +20,15 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddCascadingAuthenticationState();
 
 // SQLite database context for Identity
+var dbPath = Path.Combine(AppContext.BaseDirectory, "app.db");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))); // used ai help 
+    options.UseSqlite($"Data Source={dbPath}"));
 
 // Identity configuration
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
-
+    
     // Configure password requirements
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 6;
@@ -123,7 +124,7 @@ app.MapPost("/account/register", async (
     {
         // Create user in Supabase
         var supabaseResult = await userService.Register(email, password, firstName, lastName);
-
+        
         if (supabaseResult.ok && supabaseResult.user != null)
         {
             // Sign in the user
